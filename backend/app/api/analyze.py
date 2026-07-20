@@ -3,7 +3,7 @@ from fastapi import APIRouter, Body, HTTPException
 from pathlib import Path
 import traceback
 
-from app.config import RESULTS_DIR
+from app.config import RESULTS_DIR, UPLOAD_DIR
 from app.services.hazard_engine import HazardEngine
 from app.services.yolo_detector import YOLODetector
 from app.services.image_annotator import ImageAnnotator
@@ -18,13 +18,15 @@ annotator = ImageAnnotator()
 @router.post("/analyze")
 def analyze(data: dict = Body(...)):
 
-    image_path = data.get("image_path")
+    filename = data.get("filename")
 
-    if not image_path:
+    if not filename:
         raise HTTPException(
             status_code=400,
-            detail="image_path is required."
+            detail="filename is required."
         )
+
+    image_path = str(UPLOAD_DIR / filename)
 
     try:
 
@@ -51,8 +53,8 @@ def analyze(data: dict = Body(...)):
 
         return {
             "success": True,
-            "image": image_path,
-            "annotated_image": str(output_path),
+            "image": f"/uploads/{filename}",
+            "annotated_image": f"/results/{filename}",
             "total_detections": len(detections),
             "detections": detections,
             "analysis": analysis
